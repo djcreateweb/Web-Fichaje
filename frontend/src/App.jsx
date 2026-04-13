@@ -2480,7 +2480,7 @@ import {
 import { deleteCompany, deleteEmployee, getAppData, getSession, upsertCompany, upsertEmployee } from './services/storage.service'
 import { clockIn, clockOut, exportRecordsCsv } from './services/records.service'
 import { aprobarSolicitud, crearSolicitudCambio, rechazarSolicitud } from './services/solicitudes.service'
-import { calculateWorkedHours, formatDate, formatDateTime, formatHours, formatTime } from './utils/formatters'
+import { calculateUniqueWorkedHours, calculateWorkedHours, formatDate, formatDateTime, formatHours, formatTime } from './utils/formatters'
 import DailyTimeline from './components/charts/DailyTimeline'
 import MapaFichajes from './components/maps/MapaFichajes'
 import ProgramadorPanel from './programador/ProgramadorPanel'
@@ -2679,12 +2679,9 @@ function App() {
     if (!hasAdminAccess) return []
     return employeesForCompany
       .map((employee) => {
-        const workedHours = recordsForCompany
+        const workedHours = calculateUniqueWorkedHours(recordsForCompany
           .filter((record) => record.employeeId === employee.id && record.exitTimestamp)
-          .reduce(
-            (acc, record) => acc + calculateWorkedHours(record.entryTimestamp, record.exitTimestamp),
-            0,
-          )
+        )
         return {
           employeeId: employee.id,
           employeeName: employee.name,
@@ -2711,11 +2708,7 @@ function App() {
       return `${record.employeeId}|${_rd.getFullYear()}-${String(_rd.getMonth() + 1).padStart(2, '0')}-${String(_rd.getDate()).padStart(2, '0')}`
     }))
     const totalCompleted = uniqueDaysAll.size
-    const totalHours = completed.reduce(
-      (acc, record) =>
-        acc + calculateWorkedHours(record.entryTimestamp, record.exitTimestamp),
-      0,
-    )
+    const totalHours = calculateUniqueWorkedHours(completed)
 
     const daysByEmployee = new Map()
     const hoursByEmployeeMap = new Map()
@@ -2728,11 +2721,13 @@ function App() {
       const dayKey = `${_rd.getFullYear()}-${String(_rd.getMonth() + 1).padStart(2, '0')}-${String(_rd.getDate()).padStart(2, '0')}`
       if (!daysByEmployee.has(record.employeeId)) daysByEmployee.set(record.employeeId, new Set())
       daysByEmployee.get(record.employeeId).add(dayKey)
-      hoursByEmployeeMap.set(
-        record.employeeId,
-        (hoursByEmployeeMap.get(record.employeeId) ?? 0) +
-        calculateWorkedHours(record.entryTimestamp, record.exitTimestamp),
-      )
+    })
+
+    // Calcular horas por empleado sin doble conteo por solapes/duplicados
+    trackableEmployees.forEach((employee) => {
+      if (dashboardEmployeeId && employee.id !== dashboardEmployeeId) return
+      const empCompleted = completed.filter((r) => r.employeeId === employee.id)
+      hoursByEmployeeMap.set(employee.id, calculateUniqueWorkedHours(empCompleted))
     })
 
     const attendanceCounts = trackableEmployees
@@ -2914,10 +2909,7 @@ function App() {
     const days = Array.from(byDay.values())
       .sort((a, b) => a.isoKey.localeCompare(b.isoKey))
       .map(({ dateKey, isoKey, records }) => {
-        const hours = records.reduce(
-          (acc, r) => acc + (r.exitTimestamp ? calculateWorkedHours(r.entryTimestamp, r.exitTimestamp) : 0),
-          0,
-        )
+        const hours = calculateUniqueWorkedHours(records.filter((r) => r.exitTimestamp))
         return { dateKey, isoKey, records, hours }
       })
 

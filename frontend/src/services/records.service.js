@@ -1,5 +1,5 @@
 import { getAppData, saveRecord } from './storage.service'
-import { calculateWorkedHours } from '../utils/formatters'
+import { calculateUniqueWorkedHours, calculateWorkedHours } from '../utils/formatters'
 
 export function getEmployeeOpenRecord(employeeId) {
   const { records } = getAppData()
@@ -62,13 +62,9 @@ export function getHoursSummary() {
   const { employees, records } = getAppData()
   return employees
     .map((employee) => {
-      const workedHours = records
-        .filter((record) => record.employeeId === employee.id && record.exitTimestamp)
-        .reduce(
-          (acc, record) =>
-            acc + calculateWorkedHours(record.entryTimestamp, record.exitTimestamp),
-          0,
-        )
+      const workedHours = calculateUniqueWorkedHours(
+        records.filter((record) => record.employeeId === employee.id && record.exitTimestamp),
+      )
 
       return {
         employeeId: employee.id,

@@ -122,7 +122,8 @@ export default function AttendanceBarChart({ data, hoursData, showHours = true }
         <div className="absolute inset-0 pl-11 flex items-end gap-1.5 sm:gap-2">
           {normalized.map((item, idx) => {
             // Give a tiny min-height so zeros are visible
-            const barH = Math.max(2, (item.percent / 100) * CHART_HEIGHT)
+            const minBarHeight = isAttendance ? 2 : 8
+            const barH = Math.max(minBarHeight, (item.percent / 100) * CHART_HEIGHT)
             const isHovered = hoveredIndex === idx
 
             return (
@@ -136,6 +137,9 @@ export default function AttendanceBarChart({ data, hoursData, showHours = true }
                 onBlur={() => setHoveredIndex(null)}
                 aria-label={`${item.employeeName}: ${item.formatted}`}
               >
+                <span className="text-[10px] text-slate-600 font-mono mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {item.formatted}
+                </span>
                 <div
                   className="w-full max-w-[40px] rounded-t-sm transition-all duration-300 ease-out"
                   style={{

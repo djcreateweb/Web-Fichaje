@@ -295,6 +295,7 @@ class FichajeControlador extends Controller
                     'horas_totales'   => 0,
                     'dias_trabajados' => [],
                     '_entradas'       => [],
+                    '_intervalos'     => [],
                 ];
             }
 
@@ -302,17 +303,71 @@ class FichajeControlador extends Controller
                 $porEmpleado[$eid]['_entradas'][] = $f->fecha_hora;
             } elseif ($f->tipo === 'salida' && !empty($porEmpleado[$eid]['_entradas'])) {
                 $entrada = array_shift($porEmpleado[$eid]['_entradas']);
-                $horas = $f->fecha_hora->diffInMinutes($entrada) / 60;
-                $porEmpleado[$eid]['horas_totales'] += round($horas, 2);
-                $dia = Carbon::parse($f->fecha_hora)->toDateString();
-                $porEmpleado[$eid]['dias_trabajados'][$dia] = true;
+                if ($f->fecha_hora->greaterThan($entrada)) {
+                    $porEmpleado[$eid]['_intervalos'][] = [$entrada->copy(), $f->fecha_hora->copy()];
+                }
             }
         }
 
         return array_values(array_map(function ($item) {
-            unset($item['_entradas']);
-            $item['dias_trabajados'] = count($item['dias_trabajados']);
-            $item['horas_totales'] = round($item['horas_totales'], 2);
+            $intervalosPorDia = [];
+
+            foreach ($item['_intervalos'] as [$inicio, $fin]) {
+                // Si el intervalo cruza de día, lo partimos para computar correctamente por día
+                $cursor = $inicio->copy();
+                while ($cursor->toDateString() !== $fin->toDateString()) {
+                    $finDia = $cursor->copy()->endOfDay();
+                    $dia = $cursor->toDateString();
+                    $intervalosPorDia[$dia][] = [$cursor->copy(), $finDia->copy()];
+                    $cursor = $finDia->copy()->addSecond();
+                }
+
+                $dia = $cursor->toDateString();
+                $intervalosPorDia[$dia][] = [$cursor->copy(), $fin->copy()];
+            }
+
+            $minutosTotales = 0;
+            $diasTrabajados = 0;
+
+            foreach ($intervalosPorDia as $dia => $intervalos) {
+                // Ordenar por inicio y fusionar solapes para evitar doble conteo
+                usort($intervalos, fn($a, $b) => $a[0] <=> $b[0]);
+
+                $fusionados = [];
+                foreach ($intervalos as [$inicio, $fin]) {
+                    if (empty($fusionados)) {
+                        $fusionados[] = [$inicio, $fin];
+                        continue;
+                    }
+
+                    [$uInicio, $uFin] = $fusionados[count($fusionados) - 1];
+                    if ($inicio->lessThanOrEqualTo($uFin)) {
+                        // Solapa: extender fin si procede
+                        if ($fin->greaterThan($uFin)) {
+                            $fusionados[count($fusionados) - 1][1] = $fin;
+                        }
+                        continue;
+                    }
+
+                    $fusionados[] = [$inicio, $fin];
+                }
+
+                $minutosDia = 0;
+                foreach ($fusionados as [$inicio, $fin]) {
+                    if ($fin->greaterThan($inicio)) {
+                        $minutosDia += $fin->diffInMinutes($inicio);
+                    }
+                }
+
+                if ($minutosDia > 0) {
+                    $diasTrabajados++;
+                    $minutosTotales += $minutosDia;
+                }
+            }
+
+            unset($item['_entradas'], $item['_intervalos']);
+            $item['dias_trabajados'] = $diasTrabajados;
+            $item['horas_totales'] = round($minutosTotales / 60, 2);
             return $item;
         }, $porEmpleado));
     }
