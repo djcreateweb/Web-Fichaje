@@ -31,6 +31,15 @@ class AutenticacionControlador extends Controller
             ->first();
 
         if (!$empleado || !Hash::check($datos['contrasena'], $empleado->contrasena)) {
+            Auditoria::registrar(
+                accion: 'login_fallido',
+                tenantId: $empleado?->tenant_id,
+                empleadoId: null,
+                empresaId: $empleado?->empresa_id,
+                datosNuevos: ['identificador' => $datos['identificador']],
+                ip: $request->ip(),
+                userAgent: $request->userAgent(),
+            );
             return response()->json(['mensaje' => 'Credenciales incorrectas'], 422);
         }
 

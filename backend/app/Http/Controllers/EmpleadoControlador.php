@@ -7,13 +7,14 @@ use App\Modelos\Empleado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class EmpleadoControlador extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $empleados = Empleado::query()
-            ->when($request->empresa_id, fn($q, $v) => $q->where('empresa_id', $v))
+            ->when($request->input('empresa_id'), fn($q, $v) => $q->where('empresa_id', $v))
             ->get()
             ->map(fn($e) => $this->serializar($e));
 
@@ -39,7 +40,7 @@ class EmpleadoControlador extends Controller
             'nombre'               => $datos['nombre'],
             'apellidos'            => $datos['apellidos'] ?? null,
             'correo'               => strtolower($datos['correo']),
-            'contrasena'           => Hash::make('Temporal1234!'),
+            'contrasena'           => Hash::make(Str::password(12)),
             'rol'                  => $datos['rol'],
             'departamento'         => $datos['departamento'] ?? null,
             'puesto'               => $datos['puesto'] ?? null,
@@ -141,7 +142,7 @@ class EmpleadoControlador extends Controller
     public function eliminarContrasena(Empleado $empleado): JsonResponse
     {
         $empleado->update([
-            'contrasena'           => Hash::make('Temporal1234!'),
+            'contrasena'           => Hash::make(Str::password(12)),
             'debe_cambiar_password' => true,
         ]);
 
@@ -159,7 +160,9 @@ class EmpleadoControlador extends Controller
             'contrasena' => 'required|string',
         ]);
 
-        $empleado = Empleado::find($datos['empleadoId']);
+        $empleado = Empleado::where('id', $datos['empleadoId'])
+            ->where('tenant_id', app()->bound('tenant') ? app('tenant')->id : null)
+            ->first();
         if (!$empleado || !Hash::check($datos['contrasena'], $empleado->contrasena)) {
             return response()->json(['mensaje' => 'Credenciales incorrectas'], 422);
         }

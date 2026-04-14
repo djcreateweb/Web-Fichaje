@@ -2491,7 +2491,6 @@ function App() {
     return params.get('panel') === 'programador'
   }, [])
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:9000/api'
   const frontendProgramadorUrl = `${window.location.origin}/?panel=programador`
 
   const [appData, setAppData] = useState(getAppData())
@@ -2578,7 +2577,7 @@ function App() {
     const adminEmail = session?.rol === 'admin' ? session.email : appData.admin?.username
     if (!adminEmail) return []
     return (appData.companies ?? []).filter((c) => c.adminEmail === adminEmail)
-  }, [appData.admin?.username, appData.companies, session?.email, session?.rol])
+  }, [appData.admin?.username, appData.companies, session])
 
   const resolvedActiveCompanyId = useMemo(() => {
     if (session?.rol === 'superior') return session.companyId
@@ -2673,7 +2672,7 @@ function App() {
         return matchesEmployee && matchesFrom && matchesTo
       })
       .sort((a, b) => b.entryTimestamp - a.entryTimestamp)
-  }, [filters, hasAdminAccess, recordsForCompany, session])
+  }, [filters, hasAdminAccess, recordsForCompany, session, trackableEmployees])
 
   const hoursSummary = useMemo(() => {
     if (!hasAdminAccess) return []

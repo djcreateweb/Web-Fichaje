@@ -4,7 +4,7 @@ use App\Http\Controllers\ProgramadorAuthControlador;
 use App\Http\Controllers\ProgramadorTenantControlador;
 use Illuminate\Support\Facades\Route;
 
-Route::post("/login", [ProgramadorAuthControlador::class, "login"]);
+Route::middleware('throttle:superadmin-login')->post("/login", [ProgramadorAuthControlador::class, "login"]);
 Route::get("/login", function () {
     return response()->json([
         "ok" => false,
@@ -13,8 +13,8 @@ Route::get("/login", function () {
             "metodo" => "POST",
             "url" => "/api/programador/login",
             "body" => [
-                "email" => "admin",
-                "password" => "Windows123",
+                "email" => "tu_correo@ejemplo.com",
+                "password" => "tu_contraseña",
             ],
         ],
     ], 200);

@@ -21,19 +21,19 @@ class FichajeControlador extends Controller
         $query = Fichaje::query()->with('empleado:id,nombre,apellidos,correo');
 
         if ($request->filled('empleado_id')) {
-            $query->where('empleado_id', $request->empleado_id);
+            $query->where('empleado_id', $request->input('empleado_id'));
         }
         if ($request->filled('empresa_id')) {
-            $query->where('empresa_id', $request->empresa_id);
+            $query->where('empresa_id', $request->input('empresa_id'));
         }
         if ($request->filled('tipo')) {
-            $query->where('tipo', $request->tipo);
+            $query->where('tipo', $request->input('tipo'));
         }
         if ($request->filled('fecha_desde')) {
-            $query->whereDate('fecha_hora', '>=', $request->fecha_desde);
+            $query->whereDate('fecha_hora', '>=', $request->input('fecha_desde'));
         }
         if ($request->filled('fecha_hasta')) {
-            $query->whereDate('fecha_hora', '<=', $request->fecha_hasta);
+            $query->whereDate('fecha_hora', '<=', $request->input('fecha_hasta'));
         }
 
         $fichajes = $query->orderBy('fecha_hora', 'desc')->get();
@@ -66,10 +66,10 @@ class FichajeControlador extends Controller
         $query = Fichaje::query()->where('empleado_id', $empleado->id);
 
         if ($request->filled('fecha_desde')) {
-            $query->whereDate('fecha_hora', '>=', $request->fecha_desde);
+            $query->whereDate('fecha_hora', '>=', $request->input('fecha_desde'));
         }
         if ($request->filled('fecha_hasta')) {
-            $query->whereDate('fecha_hora', '<=', $request->fecha_hasta);
+            $query->whereDate('fecha_hora', '<=', $request->input('fecha_hasta'));
         }
 
         return response()->json(['ok' => true, 'datos' => $query->orderBy('fecha_hora')->get()]);
@@ -226,9 +226,9 @@ class FichajeControlador extends Controller
 
         $fichajes = Fichaje::query()
             ->with('empleado:id,nombre,apellidos')
-            ->whereDate('fecha_hora', '>=', $request->fecha_desde)
-            ->whereDate('fecha_hora', '<=', $request->fecha_hasta)
-            ->when($request->filled('empresa_id'), fn($q) => $q->where('empresa_id', $request->empresa_id))
+            ->whereDate('fecha_hora', '>=', $request->input('fecha_desde'))
+            ->whereDate('fecha_hora', '<=', $request->input('fecha_hasta'))
+            ->when($request->filled('empresa_id'), fn($q) => $q->where('empresa_id', $request->input('empresa_id')))
             ->orderBy('empleado_id')
             ->orderBy('fecha_hora')
             ->get();

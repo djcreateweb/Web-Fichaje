@@ -6,6 +6,23 @@ use App\Modelos\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int         $id
+ * @property int         $tenant_id
+ * @property int         $empresa_id
+ * @property int         $empleado_id
+ * @property string      $tipo
+ * @property \Illuminate\Support\Carbon $fecha_hora
+ * @property float|null  $latitud
+ * @property float|null  $longitud
+ * @property string|null $direccion_aproximada
+ * @property bool|null   $dentro_de_rango
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property string|null $notas
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class Fichaje extends Model
 {
     use BelongsToTenant;

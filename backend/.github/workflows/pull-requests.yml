@@ -1,7 +1,7 @@
 name: Pull Requests
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened]
 
 permissions:
@@ -9,4 +9,4 @@ permissions:
 
 jobs:
   uneditable:
-    uses: laravel/.github/.github/workflows/pull-requests.yml@main
+    uses: laravel/.github/.github/workflows/pull-requests.yml@35afbfe24fc0e37e0c3ca6e7cc8bfbcb3f36dcb2 # pinned ref

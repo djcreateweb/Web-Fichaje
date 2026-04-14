@@ -7,6 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int         $id
+ * @property int         $tenant_id
+ * @property string      $nombre
+ * @property string      $slug
+ * @property string      $correo_administrador
+ * @property string|null $telefono
+ * @property string|null $direccion
+ * @property array|null  $configuracion
+ * @property bool        $requiere_geolocalizacion
+ * @property int|null    $radio_permitido_metros
+ * @property float|null  $latitud_oficina
+ * @property float|null  $longitud_oficina
+ * @property bool        $activa
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class Empresa extends Model
 {
     use BelongsToTenant;
